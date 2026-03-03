@@ -1,0 +1,32 @@
+{
+  "name": "env-template",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Generate .env.example from .env — strip values, keep keys, validate team sync",
+  "bin": {
+    "env-template": "./index.js",
+    "envt": "./index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "developer-tools",
+    "cli",
+    "nodejs",
+    "zero-dependencies",
+    "env",
+    "dotenv",
+    "security",
+    "secrets"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NickCirv/env-template"
+  },
+  "bugs": {
+    "url": "https://github.com/NickCirv/env-template/issues"
+  },
+  "homepage": "https://github.com/NickCirv/env-template#readme"
+}
