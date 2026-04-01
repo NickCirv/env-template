@@ -1,3 +1,5 @@
+![Banner](banner.svg)
+
 # env-template
 
 Generate `.env.example` from `.env` — strip values, keep keys, validate team sync.
