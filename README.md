@@ -1,197 +1,61 @@
-![Banner](banner.svg)
+<div align="center">
 
 # env-template
 
-Generate `.env.example` from `.env` — strip values, keep keys, validate team sync.
+**Generate `.env.example` from `.env` — strip secrets, keep keys, catch drift in CI.**
 
-Zero external dependencies. Node 18+. Single file.
+[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen?labelColor=0B0A09)](LICENSE)
+[![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen?labelColor=0B0A09)](package.json)
+[![Node: >=18](https://img.shields.io/badge/node-%3E%3D18-blue?labelColor=0B0A09)](package.json)
 
-```bash
-npx env-template generate
-```
-
----
-
-## Why
-
-Every project has a `.env` with real secrets and a `.env.example` for onboarding. Keeping them in sync manually is error-prone. `env-template` automates it.
-
-- **Never commits secrets** — only key names go in the template
-- **Smart placeholders** — hints like `your_stripe_key_here`, `https://example.com`, `3000`
-- **Team sync validation** — catch missing or undocumented keys before they cause incidents
-- **Zero dependencies** — nothing to audit, nothing to update
-
----
+</div>
 
 ## Install
 
-**Use via npx (no install needed):**
 ```bash
-npx env-template generate
+npx github:NickCirv/env-template generate
 ```
 
-**Install globally:**
-```bash
-npm install -g env-template
-```
+No global install needed. Runs directly from GitHub.
 
-**Short alias:**
-```bash
-envt generate
-```
-
----
-
-## Commands
-
-### `generate` — Create `.env.example` from `.env`
-
-Strips all values. Preserves keys, comments, and blank lines.
+## Usage
 
 ```bash
-env-template generate
-env-template generate --input .env.local --output .env.example
-env-template generate --no-hints
+# Generate .env.example from your .env (strips all values)
+npx github:NickCirv/env-template generate
+
+# Check .env is in sync with .env.example (use in CI)
+npx github:NickCirv/env-template check
+
+# Show which keys differ between .env and .env.example
+npx github:NickCirv/env-template diff
+
+# Add missing keys from .env.example into .env (with empty values)
+npx github:NickCirv/env-template sync
+
+# Flag sensitive keys that lack a documentation comment
+npx github:NickCirv/env-template audit
 ```
 
-**Options:**
-- `--input <file>` — source file (default: `.env`)
-- `--output <file>` — output file (default: `.env.example`)
-- `--no-hints` — output empty values instead of smart placeholders
+| Flag | Command | Description |
+|---|---|---|
+| `--input <file>` | `generate` | Source env file (default: `.env`) |
+| `--output <file>` | `generate` | Output file (default: `.env.example`) |
+| `--no-hints` | `generate` | Output empty values instead of smart placeholders |
+| `--env <file>` | `check` / `diff` / `sync` | Your env file (default: `.env`) |
+| `--template <file>` | `check` / `diff` / `sync` | Template file (default: `.env.example`) |
 
-**Smart placeholders** (pattern-matched, never real values):
+## What it does
 
-| Key pattern | Placeholder |
-|---|---|
-| `*_KEY`, `*_SECRET`, `*_TOKEN` | `your_xxx_key_here` |
-| `*_URL`, `*_HOST` | `https://example.com` |
-| `*_PORT` | `3000` |
-| `*_ENV`, `NODE_ENV` | `development` |
-| `DATABASE_*`, `*_DB_URL` | `postgres://user:pass@localhost:5432/dbname` |
-| `*_EMAIL` | `you@example.com` |
-
----
-
-### `check` — Validate `.env` against `.env.example`
-
-```bash
-env-template check
-env-template check --env .env.local --template .env.example
-```
-
-Reports:
-- `MISSING` — keys in template but not in your `.env` (exits with code 1)
-- `UNDOCUMENTED` — keys in your `.env` but not in template
-
-Use this in CI to enforce team sync:
-```yaml
-- run: npx env-template check
-```
-
----
-
-### `diff` — Show key differences
-
-```bash
-env-template diff
-```
-
-Shows which keys are only in `.env`, only in `.env.example`, or in both. Never shows values.
-
----
-
-### `sync` — Add missing keys to `.env`
-
-```bash
-env-template sync
-```
-
-Appends keys from `.env.example` that are missing from your `.env` with empty values. Safe — never overwrites existing values.
-
----
-
-### `audit` — Detect sensitive undocumented keys
-
-```bash
-env-template audit
-```
-
-Scans for keys that look sensitive (`*_KEY`, `*_SECRET`, `*_TOKEN`, etc.) and flags those missing a comment above them.
-
----
-
-## Example
-
-**Input `.env`:**
-```bash
-# Application
-APP_NAME=My App
-NODE_ENV=production
-PORT=4000
-
-# Database
-DATABASE_URL=postgres://admin:supersecret@db.prod.example.com:5432/myapp
-
-# Stripe
-STRIPE_SECRET_KEY=sk_live_abc123realkey
-STRIPE_WEBHOOK_SECRET=whsec_realwebhooksecret
-
-# Feature flags
-ENABLE_BETA=true
-```
-
-**Output `.env.example`:**
-```bash
-# Application
-APP_NAME=
-NODE_ENV=development
-PORT=3000
-
-# Database
-DATABASE_URL=postgres://user:pass@localhost:5432/dbname
-
-# Stripe
-STRIPE_SECRET_KEY=your_stripe_secret_key_here
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret_here
-
-# Feature flags
-ENABLE_BETA=
-```
-
-Real values never appear in the output.
-
----
+Reads your `.env`, strips all values, and writes a safe `.env.example` with pattern-matched placeholders (`your_stripe_secret_here`, `https://example.com`, `postgres://user:pass@...`). The `check` command compares `.env` against `.env.example` and exits non-zero on missing keys — drop it into any CI pipeline to catch new secrets that never got documented. Real values never appear in any output file.
 
 ## CI Integration
 
 ```yaml
 # .github/workflows/env-check.yml
-name: Env Check
-on: [push, pull_request]
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npx env-template check
+- run: npx github:NickCirv/env-template check
 ```
 
 ---
 
-## Security
-
-This tool's entire purpose is to strip secrets. It:
-
-- Never writes actual env values to any file
-- Never logs or echoes values
-- Uses only built-in Node.js modules (`fs`, `path`)
-- Has zero npm dependencies — nothing in your supply chain
-
----
-
-## License
-
-MIT
+<sub>Zero dependencies · Node >=18 · MIT · by <a href="https://github.com/NickCirv">NickCirv</a></sub>
